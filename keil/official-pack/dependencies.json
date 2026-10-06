@@ -1,0 +1,23 @@
+{
+  "project": "keil\\official-pack\\N32G452_OfficialPack_RTThread.uvprojx",
+  "packs": [
+    "ARM.CMSIS.5.9.0",
+    "NSING.N32G45x_DFP.1.0.7"
+  ],
+  "cmsis_core_component": "5.6.0",
+  "targets": [
+    "AC5_Headless",
+    "AC5_LVGL",
+    "AC6_Headless",
+    "AC6_LVGL"
+  ],
+  "source_roots": [
+    "app",
+    "board",
+    "inc",
+    "Nations.N32G45x_Library.2.6.0/middlewares/rt-thread",
+    "third_party/lvgl"
+  ],
+  "startup_adjustment": "Project-local official ARMASM startup: Stack_Size=0x800, Heap_Size=0x200",
+  "dfp_pdsc_sha256": "5c5b53eb65af741221ba212e80e719eac87b7e7d0674a0e1413a32c340aa4eb3"
+}

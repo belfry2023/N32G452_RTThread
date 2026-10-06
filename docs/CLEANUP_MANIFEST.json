@@ -1,0 +1,184 @@
+{
+  "workspace": "C:\\Users\\belfry\\workspaceN32",
+  "recovery_archive": "zip/history/workspace-before-cleanup-20261004.zip",
+  "archive_sha256": "31fb6a11d8b19ed00eaf09726628e0b6b38343e809ed4e1faafe5e63cf304a76",
+  "byte_verified_duplicate_files": 2119,
+  "removal_targets": [
+    {
+      "path": "AN_General_MCU_RT_Thread_Device_Registration_Application_Note_V1.0.0",
+      "files": 2,
+      "bytes": 1277442
+    },
+    {
+      "path": "AN_N32G45x_N32G4FR_N32WB452_GCC_Development_Environment_Application_Note_V3.1.0",
+      "files": 2,
+      "bytes": 2508695
+    },
+    {
+      "path": "jlink_patch",
+      "files": 551,
+      "bytes": 5419541
+    },
+    {
+      "path": "references/flash",
+      "files": 6,
+      "bytes": 34483
+    },
+    {
+      "path": "references/gcc",
+      "files": 2,
+      "bytes": 2508695
+    },
+    {
+      "path": "references/hsi",
+      "files": 113,
+      "bytes": 7768181
+    },
+    {
+      "path": "references/iap",
+      "files": 495,
+      "bytes": 28501265
+    },
+    {
+      "path": "references/jlink",
+      "files": 551,
+      "bytes": 5419541
+    },
+    {
+      "path": "references/mmu",
+      "files": 36,
+      "bytes": 3129993
+    },
+    {
+      "path": "references/poweron",
+      "files": 115,
+      "bytes": 6823286
+    },
+    {
+      "path": "references/rsram",
+      "files": 116,
+      "bytes": 6472384
+    },
+    {
+      "path": "references/rtdev",
+      "files": 2,
+      "bytes": 1277442
+    },
+    {
+      "path": "references/secure",
+      "files": 128,
+      "bytes": 13488085
+    },
+    {
+      "path": "tools/openocd",
+      "files": 1,
+      "bytes": 4162
+    },
+    {
+      "path": "tools/jlink",
+      "files": 3,
+      "bytes": 2617
+    },
+    {
+      "path": "build",
+      "files": 1553,
+      "bytes": 486115087
+    },
+    {
+      "path": "board/drv_gp22.c",
+      "files": 1,
+      "bytes": 10319
+    },
+    {
+      "path": "board/drv_gp22_int.c",
+      "files": 1,
+      "bytes": 3073
+    },
+    {
+      "path": "inc/drv_gp22.h",
+      "files": 1,
+      "bytes": 5463
+    },
+    {
+      "path": "src/main.c",
+      "files": 1,
+      "bytes": 7824
+    },
+    {
+      "path": "src/n32g45x_it.c",
+      "files": 1,
+      "bytes": 1485
+    },
+    {
+      "path": "inc/main.h",
+      "files": 1,
+      "bytes": 509
+    },
+    {
+      "path": "inc/n32g45x_it.h",
+      "files": 1,
+      "bytes": 650
+    },
+    {
+      "path": "inc/app_board.h",
+      "files": 1,
+      "bytes": 1156
+    },
+    {
+      "path": "linker/n32g452.ld.in",
+      "files": 1,
+      "bytes": 4010
+    },
+    {
+      "path": "tools/audit_inputs.py",
+      "files": 1,
+      "bytes": 2318
+    },
+    {
+      "path": "docs/LEGACY_README.md",
+      "files": 1,
+      "bytes": 80909
+    },
+    {
+      "path": "docs/APP_ARCHITECTURE.md",
+      "files": 1,
+      "bytes": 13073
+    },
+    {
+      "path": "docs/APP_STANDARD_STRUCTURE.md",
+      "files": 1,
+      "bytes": 13409
+    },
+    {
+      "path": "docs/DISPLAY_GC9307C.md",
+      "files": 1,
+      "bytes": 43296
+    },
+    {
+      "path": "docs/PIN_CONFIG_GUIDE.md",
+      "files": 1,
+      "bytes": 10497
+    },
+    {
+      "path": "docs/RTTHREAD_LVGL.md",
+      "files": 1,
+      "bytes": 32385
+    },
+    {
+      "path": "docs/RTTHREAD_SPI_PORTING_GUIDE.md",
+      "files": 1,
+      "bytes": 36927
+    }
+  ],
+  "before_total_bytes": 809017818,
+  "completed_date": "2026-10-04",
+  "removed_total_bytes": 571018202,
+  "after_rebuild_total_bytes": 420823826,
+  "net_reduction_bytes": 388193992,
+  "current_build_bytes": 166081632,
+  "retained_presets": [
+    "rtthread",
+    "rtthread-lvgl",
+    "rtthread-lvgl-release"
+  ]
+}

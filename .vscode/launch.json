@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "N32 GP21 + LVGL (HSI / J-Link)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "jlink",
+      "device": "${config:n32.jlinkDevice}",
+      "interface": "swd",
+      "executable": "${workspaceFolder}/build/rtthread-lvgl/n32g452-firmware.elf",
+      "svdFile": "${workspaceFolder}/tools/svd/N32G452.svd",
+      "cwd": "${workspaceFolder}",
+      "gdbPath": "${config:n32.gdbPath}",
+      "debuggerArgs": ["-iex", "set osabi none"],
+      "serverpath": "${config:n32.jlinkDir}/JLinkGDBServerCL.exe",
+      "runToEntryPoint": "main",
+      "preLaunchTask": "N32: Build RT-Thread + GP21 + LVGL"
+    }
+  ]
+}

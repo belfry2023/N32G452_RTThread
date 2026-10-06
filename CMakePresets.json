@@ -1,0 +1,67 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/cmake/arm-none-eabi-toolchain.cmake",
+      "cacheVariables": {
+        "N32_VARIANT": "xE",
+        "N32_FPU": "soft",
+        "N32_USE_NANO": "ON"
+      }
+    },
+    {
+      "name": "rtthread",
+      "displayName": "N32G452VE HSI 128MHz + RT-Thread + GP21 5MHz",
+      "description": "内核 + 板级 + app/ 应用层；SRAM 低半给内核数据、高半作内核堆",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "N32_VARIANT": "xE",
+        "N32_SYSCLK_SRC": "hsi_pll",
+        "N32_SYSCLK_FREQ": "128000000",
+        "N32_USE_LVGL": "OFF"
+      }
+    },
+    {
+      "name": "rtthread-lvgl",
+      "displayName": "N32G452VE HSI + RT-Thread + GP21 + GC9307C + LVGL",
+      "description": "需要 third_party/lvgl (v8.3)。LVGL 用内核堆，心跳接 rt_tick_get()",
+      "inherits": "rtthread",
+      "cacheVariables": {
+        "N32_USE_LVGL": "ON"
+      }
+    },
+    {
+      "name": "rtthread-lvgl-release",
+      "inherits": "rtthread-lvgl",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "rtthread",
+      "configurePreset": "rtthread"
+    },
+    {
+      "name": "rtthread-lvgl",
+      "configurePreset": "rtthread-lvgl"
+    },
+    {
+      "name": "rtthread-lvgl-release",
+      "configurePreset": "rtthread-lvgl-release"
+    }
+  ],
+  "testPresets": [],
+  "workflowPresets": []
+}

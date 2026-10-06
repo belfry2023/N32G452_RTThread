@@ -1,0 +1,98 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "N32: Keil AC5 + AC6",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/tools/build_keil.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "N32: Build RT-Thread + GP21 + LVGL",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/tools/build.ps1"
+      ],
+      "problemMatcher": "$gcc",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "N32: Build Release",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/tools/build.ps1",
+        "-Preset",
+        "rtthread-lvgl-release"
+      ],
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "N32: Build Headless",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/tools/build.ps1",
+        "-Preset",
+        "rtthread"
+      ],
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "N32: Driver tests",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/tools/run_tests.ps1"
+      ],
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "N32: Check environment",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/tools/check_env.ps1"
+      ],
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "N32: Linker regression tests",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/tools/test_linker.ps1"
+      ],
+      "problemMatcher": "$gcc"
+    }
+  ]
+}

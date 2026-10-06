@@ -1,0 +1,230 @@
+/**
+  ****************************************************************************
+  Copyright (c) 2019, Nations Technologies Inc.
+
+  All rights reserved.
+  ****************************************************************************
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  - Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the disclaimer below.
+
+  Nations' name may not be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+  DISCLAIMER: THIS SOFTWARE IS PROVIDED BY NATIONS "AS IS" AND ANY EXPRESS OR
+  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
+  DISCLAIMED. IN NO EVENT SHALL NATIONS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+  OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  ****************************************************************************
+ **/
+
+/* Adapted from the SDK GCC n32g45x_flash.ld following GCC guide 4.3/7.1.
+ * N32G452VE: 512 KiB Flash, 128 KiB SRAM + contiguous 16 KiB R-SRAM.
+ * Lower half: static data, bounded newlib heap, dedicated MSP stack.
+ * Upper half: RT-Thread heap (R-SRAM is ordinary runtime memory here).
+ * CMake is the sole source of region sizes; C code uses exported symbols.
+ */
+
+ENTRY(Reset_Handler)
+
+/* 栈顶 = RT-Thread 堆的起始地址 */
+_estack = @RAM_ORIGIN@ + @RAM_LENGTH@;
+
+_Min_Heap_Size  = @MIN_HEAP_SIZE@;
+_Min_Stack_Size = @MIN_STACK_SIZE@;
+
+MEMORY
+{
+  FLASH (rx)  : ORIGIN = @FLASH_ORIGIN@, LENGTH = @FLASH_LENGTH@
+  RAM   (xrw) : ORIGIN = @RAM_ORIGIN@,   LENGTH = @RAM_LENGTH@
+  RT_HEAP (rw) : ORIGIN = @RAM_ORIGIN@ + @RAM_LENGTH@,
+                 LENGTH = @RAM_TOTAL_LENGTH@ - @RAM_LENGTH@
+}
+
+SECTIONS
+{
+  .isr_vector ORIGIN(FLASH) :
+  {
+    . = ALIGN(4);
+    __vector_start = .;
+    KEEP(*(.isr_vector))
+    __vector_end = .;
+    . = ALIGN(4);
+  } >FLASH
+
+  .text :
+  {
+    . = ALIGN(4);
+    *(.text)
+    *(.text*)
+    *(.glue_7)
+    *(.glue_7t)
+    *(.eh_frame)
+
+    KEEP(*(.init))
+    KEEP(*(.fini))
+
+    . = ALIGN(4);
+    _etext = .;
+  } >FLASH
+
+  .rodata :
+  {
+    . = ALIGN(4);
+    *(.rodata)
+    *(.rodata*)
+    . = ALIGN(4);
+  } >FLASH
+
+  .ARM.extab : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+  .ARM : {
+    __exidx_start = .;
+    *(.ARM.exidx*)
+    __exidx_end = .;
+  } >FLASH
+
+  .preinit_array :
+  {
+    PROVIDE_HIDDEN(__preinit_array_start = .);
+    KEEP(*(.preinit_array*))
+    PROVIDE_HIDDEN(__preinit_array_end = .);
+  } >FLASH
+
+  .init_array :
+  {
+    PROVIDE_HIDDEN(__init_array_start = .);
+    KEEP(*(SORT(.init_array.*)))
+    KEEP(*(.init_array*))
+    PROVIDE_HIDDEN(__init_array_end = .);
+  } >FLASH
+
+  .fini_array :
+  {
+    PROVIDE_HIDDEN(__fini_array_start = .);
+    KEEP(*(SORT(.fini_array.*)))
+    KEEP(*(.fini_array*))
+    PROVIDE_HIDDEN(__fini_array_end = .);
+  } >FLASH
+
+  /* --------------------------------------------------------------------
+   *  ★ RT-Thread 组件自动初始化段
+   *     INIT_BOARD_EXPORT  -> .rti_fn.1
+   *     INIT_PREV_EXPORT   -> .rti_fn.2
+   *     INIT_DEVICE_EXPORT -> .rti_fn.3
+   *     INIT_COMPONENT_EXPORT -> .rti_fn.4
+   *     INIT_ENV_EXPORT    -> .rti_fn.5
+   *     INIT_APP_EXPORT    -> .rti_fn.6
+   *  必须按段名排序收集, 内核按地址顺序依次调用。
+   * -------------------------------------------------------------------- */
+  .rti_fn :
+  {
+    . = ALIGN(4);
+    __rt_init_start = .;
+    KEEP(*(SORT(.rti_fn*)))
+    __rt_init_end = .;
+    . = ALIGN(4);
+  } >FLASH
+
+  /* --------------------------------------------------------------------
+   *  ★ FINSH / msh 命令符号表
+   *     MSH_CMD_EXPORT / FINSH_FUNCTION_EXPORT 把命令表项放进 FSymTab 段,
+   *     FINSH_VAR_EXPORT 放进 VSymTab 段。
+   *     msh 的 help / list_thread / list_device 等命令就是遍历这张表实现的,
+   *     所以必须 KEEP —— 否则会被 --gc-sections 回收,
+   *     表现为"能进 msh, 但一个命令都没有"。
+   * -------------------------------------------------------------------- */
+  .fsymtab :
+  {
+    . = ALIGN(4);
+    __fsymtab_start = .;
+    KEEP(*(FSymTab))
+    __fsymtab_end = .;
+    . = ALIGN(4);
+  } >FLASH
+
+  .vsymtab :
+  {
+    . = ALIGN(4);
+    __vsymtab_start = .;
+    KEEP(*(VSymTab))
+    __vsymtab_end = .;
+    . = ALIGN(4);
+  } >FLASH
+
+  _sidata = LOADADDR(.data);
+
+  .data :
+  {
+    . = ALIGN(4);
+    _sdata = .;
+    *(.data)
+    *(.data*)
+    . = ALIGN(4);
+    _edata = .;
+  } >RAM AT> FLASH
+
+  .bss (NOLOAD) :
+  {
+    . = ALIGN(4);
+    _sbss = .;
+    __bss_start__ = _sbss;
+    *(.bss)
+    *(.bss*)
+    *(COMMON)
+    . = ALIGN(4);
+    _ebss = .;
+    __bss_end__ = _ebss;
+  } >RAM
+
+  .noinit (NOLOAD) :
+  {
+    . = ALIGN(8);
+    *(.noinit .noinit.*)
+    . = ALIGN(8);
+    __static_ram_end = .;
+  } >RAM
+
+  /* Reserve actual regions, not a dummy combined heap/stack after .bss. */
+  __StackTop = ORIGIN(RAM) + LENGTH(RAM);
+  __StackLimit = __StackTop - _Min_Stack_Size;
+  __newlib_heap_start = __static_ram_end;
+  __newlib_heap_end = __StackLimit;
+  _end = __newlib_heap_start;
+  end = _end;
+
+  .msp_stack __StackLimit (NOLOAD) :
+  {
+    . += _Min_Stack_Size;
+  } >RAM
+
+  .rt_heap (NOLOAD) :
+  {
+    __rt_heap_start = .;
+    . += LENGTH(RT_HEAP);
+    __rt_heap_end = .;
+  } >RT_HEAP
+
+  __flash_image_end = LOADADDR(.data) + SIZEOF(.data);
+  ASSERT((ORIGIN(FLASH) & 0x1ff) == 0, "vector base must be 512-byte aligned")
+  ASSERT(SIZEOF(.isr_vector) == 408, "N32G45x vector table must contain 102 entries")
+  ASSERT((_Min_Stack_Size & 7) == 0 && _Min_Stack_Size >= 0x800, "MSP stack must be >=2KiB and 8-byte aligned")
+  ASSERT(__newlib_heap_start + _Min_Heap_Size <= __StackLimit, "static data/newlib heap overlaps MSP stack")
+  ASSERT(__StackTop == __rt_heap_start, "MSP/RT heap boundary mismatch")
+  ASSERT(__rt_heap_end == @RAM_ORIGIN@ + @RAM_TOTAL_LENGTH@, "RT heap exceeds physical RAM")
+  ASSERT((_sdata & 3) == 0 && (_edata & 3) == 0, "startup data copy requires word alignment")
+  ASSERT((_sbss & 3) == 0 && (_ebss & 3) == 0, "startup BSS clear requires word alignment")
+  ASSERT(__flash_image_end <= ORIGIN(FLASH) + LENGTH(FLASH), "data image exceeds Flash")
+  ASSERT(__rt_init_end > __rt_init_start, "RT initialization table missing")
+  ASSERT(__fsymtab_end > __fsymtab_start, "shell registration table missing")
+
+  .ARM.attributes 0 : { *(.ARM.attributes) }
+}

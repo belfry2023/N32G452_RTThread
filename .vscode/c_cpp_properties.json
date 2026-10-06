@@ -1,0 +1,17 @@
+{
+  "version": 4,
+  "configurations": [
+    {
+      "name": "N32G452VE RT-Thread",
+      "configurationProvider": "ms-vscode.cmake-tools",
+      "compileCommands": "${workspaceFolder}/build/rtthread-lvgl/compile_commands.json",
+      "compilerPath": "C:/msys64/mingw64/bin/arm-none-eabi-gcc.exe",
+      "compilerArgs": [
+        "-mcpu=cortex-m4",
+        "-mthumb"
+      ],
+      "cStandard": "gnu11",
+      "intelliSenseMode": "gcc-arm"
+    }
+  ]
+}

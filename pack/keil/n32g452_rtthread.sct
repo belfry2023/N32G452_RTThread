@@ -1,0 +1,32 @@
+; N32G452VEL7: Flash 512 KiB, SRAM 128 KiB + contiguous R-SRAM 16 KiB.
+; AC5 and AC6, MicroLIB, software floating point ABI.
+; Startup declares exactly 0x800 bytes STACK and 0x200 bytes HEAP.
+; RT heap is an EMPTY execution region, never scatter-loaded or zeroed.
+LR_IROM1 0x08000000 0x00080000 {
+    ER_VECTORS 0x08000000 FIXED 0x200 {
+        *(RESET, +First)
+    }
+    ER_RT_INIT +0 SORTTYPE Lexical {
+        *(.rti_fn*)
+    }
+    ER_IROM1 +0 {
+        *(InRoot$$Sections)
+        .ANY (+RO)
+    }
+    RW_IRAM1 0x20000000 0x00011600 {
+        .ANY (+RW +ZI)
+    }
+    RW_LIB_HEAP 0x20011600 UNINIT 0x200 {
+        *(HEAP)
+    }
+    RW_MSP 0x20011800 UNINIT 0x800 {
+        *(STACK)
+    }
+    RT_HEAP 0x20012000 EMPTY 0x12000 {
+    }
+}
+ScatterAssert(ImageLength(ER_VECTORS) == 408)
+ScatterAssert(ImageLength(RW_MSP) == 0x800)
+ScatterAssert(ImageLimit(RW_MSP) == 0x20012000)
+ScatterAssert(ImageLength(RW_LIB_HEAP) == 0x200)
+ScatterAssert(ImageLength(ER_RT_INIT) >= 32)

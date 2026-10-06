@@ -1,0 +1,49 @@
+N32G452 RT-Thread local integration pack
+======================================
+
+This is a user-maintained integration package, not an official Nations,
+RT-Thread, LVGL or Arm release. Package version: 0.1.1.
+
+Third-party materials retain their original authorship and licenses:
+
+1. RT-Thread 3.1.4: Apache License 2.0. See Licenses/RT-Thread-Apache-2.0.txt.
+   The full license also applies to CMSIS headers bearing Apache-2.0 notices.
+2. LVGL 8.3.11: MIT license. See Licenses/LVGL-MIT.txt.
+3. Nations SDK 2.6.0: original redistribution conditions and warranty
+   disclaimer are retained in the source and derived startup files below.
+4. Project-specific board, application, integration and configuration files
+   retain the rights of their respective authors. This packaging operation
+   does not relicense those files or grant additional redistribution rights.
+
+Modified third-party material:
+- RT hwtimer.c: add the missing break after HWTIMER_CTRL_INFO_GET.
+- RT context ports: align the MSP before the HardFault C diagnostic call;
+  add GNU EABI stack alignment attributes for armlink interoperability.
+- Nations startup: fixed MSP/heap reservations for Keil scatter loading;
+  the AC6 syntax variant retains the N32G45x interrupt vector list.
+The upstream SDK checkout is not edited by the pack builder.
+
+Nations source redistribution notice
+-----------------------------------
+Copyright (c) 2019, Nations Technologies Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+- Redistributions of source code must retain the above copyright notice,
+this list of conditions and the disclaimer below.
+
+Nations' name may not be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+DISCLAIMER: THIS SOFTWARE IS PROVIDED BY NATIONS "AS IS" AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
+DISCLAIMED. IN NO EVENT SHALL NATIONS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
