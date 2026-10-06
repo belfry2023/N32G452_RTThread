@@ -1,5 +1,7 @@
 # N32G452VE · RT-Thread · GP21 · GC9307C
 
+[![validate-pack](https://github.com/belfry2023/N32G452_RTThread/actions/workflows/validate-pack.yml/badge.svg)](https://github.com/belfry2023/N32G452_RTThread/actions/workflows/validate-pack.yml)
+
 当前推荐工程使用 **N32G452VE、内部 HSI/PLL 128 MHz、GP21 外部 5 MHz 参考、GC9307C 240×320、LVGL 按键导航**。
 
 ## 依赖（已随仓库提供，克隆后可直接编译）
@@ -43,7 +45,8 @@ LVGL 的上游 `.git`（26 MB）与其它示例的图片资源（55 MB，`lv_con
 ### 1. GCC + CMake（推荐）
 
 三个预设：`rtthread`（无界面）/ `rtthread-lvgl`（带 LVGL）/ `rtthread-lvgl-release`。
-链接脚本自检目标 `verify-ld` 会拿 ELF 反查 22 条硬约束（`.data` 双地址、`_sidata` 指向、`KEEP` 段非空等），见 [官方 GCC 教程对照](docs/OFFICIAL_GCC_AUDIT.md)。
+链接脚本自检目标 `verify-ld` 会拿 ELF 反查链接约束（`.data` 双地址、`_sidata` 指向、`KEEP` 段非空等；
+条数随镜像变化，末行 `verify_link: N checks passed` 是实际值），见 [官方 GCC 教程对照](docs/OFFICIAL_GCC_AUDIT.md)。
 
 ### 2. Keil MDK 工作区工程
 
@@ -99,5 +102,22 @@ python tools\validate_pack.py    # 7 项校验（ZIP 完整性 / 依赖闭包 / 
 
 ## 许可
 
-本仓库自有代码供参考使用。第三方组件版权归各自所有者：
-RT-Thread（Apache-2.0）、LVGL（MIT）、Nations 固件库与数据手册（国民技术，未随仓库分发）。
+本仓库**自有代码**以 [MIT](LICENSE) 发布。第三方组件版权与许可证归各自所有者——
+RT-Thread 3.1.4（Apache-2.0）、LVGL 8.3.11（MIT）、Nations 固件库与器件包（国民技术，BSD 风格）、
+Arm CMSIS（Apache-2.0）——**不受 MIT 覆盖**。
+
+- 完整清单、许可证原文位置、被改动过的第三方文件：[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+- `docs/*.pdf`（数据手册、应用笔记、屏/TDC 规格书）版权归厂商，**未随仓库分发**；
+  获取途径与准确文件名见 [docs/SOURCES.md](docs/SOURCES.md)；缺这些文件不影响编译
+
+## 自动化校验
+
+每次 push / PR 由 [GitHub Actions](.github/workflows/validate-pack.yml) 跑两件事：
+
+| 作业 | 内容 |
+| --- | --- |
+| `pack` | `build_pack.py` 打包 → **cpackget 真实隔离安装** → `validate_pack.py` **7 项全跑**（不是 6 项 + 1 个 SKIP） |
+| `firmware` | `rtthread` / `rtthread-lvgl` 交叉编译 + `verify-ld` 反查链接约束 |
+
+覆盖的是"不需要实板、不需要 Keil"的部分。**实板验证（GP21 精度、屏幕时序、按键手感）
+仍然只能人工做**，见 [上板步骤](docs/BRINGUP_GP21.md)。

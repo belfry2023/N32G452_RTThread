@@ -18,6 +18,62 @@
 
 GC9307C 电源/gamma 表来自手册复位基线，不是已验证的模组厂商专用初始化。后续若获得实际屏模组初始化程序，应与 `board/gc9307c_panel.h` 比较。
 
+## 如何补齐 docs/*.pdf
+
+`docs/` 下的厂商 PDF **未随仓库分发**（版权归厂商，见 [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md)），
+`.gitignore` 里以 `docs/*.pdf`、`docs/*.PDF` 排除。
+
+> **缺这些文件不影响编译。** 构建只需要 SDK、LVGL 与源码，三者都已随仓库提供并已裁剪入库；
+> PDF 只是**设计依据**。克隆后直接 `./tools/build.ps1` 即可出固件。
+
+需要复现资料依据时，按下表把文件放回 `docs/`。**文件名必须与左列完全一致**——
+本文件与 README 的引用都以文件名为准（大小写敏感，含中文与空格）。
+
+### 国民技术（Nations / NSING）
+
+入口：[官网 N32G45x 产品页](https://www.nationstech.com/product/general/n32g/n32g45x/) → 「资料下载」；
+国际站镜像 [nsingtech.com](https://www.nsingtech.com/product/general/n32g/n32g45x/)。
+按类别找：**数据手册**（Datasheet）、**应用笔记**（Application Note）、**软件资源**（SDK / Pack）。
+
+| 文件名 | 类别 | 用在哪里 |
+| --- | --- | --- |
+| `CN_DS_N32G452_Series_Datasheet_V2.5.0.pdf` | 数据手册 | 容量、引脚复用表、时钟边界、电气参数 |
+| `CN_AN_Universal_MCU_GCC_Development_V1.2.0.pdf` | 应用笔记 | GCC 启动文件、链接脚本、`__libc_init_array` 流程 |
+| `AN_通用MCU RT_Thread设备注册应用笔记V1.0.0.pdf` | 应用笔记 | RT 设备注册与 `INIT_*_EXPORT` 初始化阶段 |
+| `AN_N32G4FR_N32G45x_N32WB452系列HSI频率调节应用笔记V1.0.0.pdf` | 应用笔记 | 内部 HSI 校准（本工程用 HSI/PLL，未烧校准值） |
+| `AN_N32G4FR_N32G45x_N32WB452系列缓慢上电应用笔记V1.0.0.pdf` | 应用笔记 | 上电时序背景 |
+| `AN_N32G45x_N32G4FR_N32WB452系列RSRAM奇偶校验出错检测应用笔记V1.0.0.pdf` | 应用笔记 | R-SRAM 与 SRAM 校验 |
+| `AN_N32G45x系列安全启动应用笔记V1.2.0.pdf` | 应用笔记 | 安全启动/保护位（本工程未改动这些配置） |
+| `N32G45x_FR_WB系列芯片IAP升级应用笔记_V1.1.0.pdf` | 应用笔记 | IAP 升级区划分（本工程未启用） |
+| `N32G45X_FR_WB series chip IAP upgrade application note_V1.1.0.pdf` | 应用笔记 | 上一条的英文版 |
+
+软件资源（已裁剪入库，无需下载也能编译）：
+
+| 名称 | 获取方式 | 仓库内情况 |
+| --- | --- | --- |
+| `Nations.N32G45x_Library.2.6.0`（SDK） | 官网「软件资源」里的固件库压缩包（原包 `11.zip`） | 只保留 `firmware/` + `middlewares/rt-thread/` + `LedBlink` 模板（47 MB → 9 MB）；需要完整包时解压覆盖回同目录 |
+| `Nations.N32G45x_DFP.1.3.0.pack` | 官网，或 Keil Pack Installer 搜 `N32G45x` | **已入库**（`zip/`，146 KB）。打包与校验脚本依赖它，见 [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md) |
+
+### 屏与 TDC 器件
+
+| 文件名 | 发布方 | 获取方式 |
+| --- | --- | --- |
+| `gc9307c.pdf` | 屏驱动 IC 原厂（GC9307C） | IC 手册一般不公开挂网，向**屏模组供应商**索取；到手后重点核对 8080-I 时序、窗口指令、RGB565 与 gamma 表 |
+| `C20450283_其他接口_TDC-GP22+5K+T&R_规格书_WJ1252922.PDF` | 经销商规格书（`C20450283` 是**立创商城料号**） | [立创商城](https://www.szlcsc.com/) 搜 `C20450283` 下载 |
+| TDC-GP21 手册 | ScioSense（原 acam） | [TDC-GP21 Datasheet](https://www.sciosense.com/wp-content/uploads/2023/12/TDC-GP21-Datasheet.pdf)。**未收录，本地也没有副本** |
+
+> ⚠️ 本地那份是 **GP22** 规格书。GP22 是 GP21 的扩展型号，寄存器与 SPI 时序基本兼容，
+> 但**不能拿 GP22 的扩展功能当 GP21 的依据**——`board/drv_gp21.c` 只按 GP21 手册实现。
+> 需要完整 GP21 手册时从 ScioSense 官网下载。
+
+### 补齐后怎么确认
+
+1. 文件名对照上表逐字核对（含中文、空格、大小写）。
+2. 跑 `./tools/check_env.ps1` 和 `./tools/build.ps1` 确认构建仍然通过——**PDF 与构建无关**，
+   这一步只是排除"顺手改坏了别的文件"。
+3. 资料与代码不一致时**以实测为准**；文档与代码的差异记录在
+   [OFFICIAL_GCC_AUDIT.md](OFFICIAL_GCC_AUDIT.md) 和 [VALIDATION.md](VALIDATION.md)。
+
 ## 联网补充资料
 
 - [Sciosense TDC-GP21 Datasheet](https://www.sciosense.com/wp-content/uploads/2023/12/TDC-GP21-Datasheet.pdf)：DB_GP21_en V1.6，2014-03-13，SPI 协议、配置寄存器、范围 2 的 HIT 选择、ID/状态读取、定点结果换算。本次通过网页解析内容核查；完整 PDF 未成功下载到工程，不能将本地 GP22 PDF 当作 GP21 手册。

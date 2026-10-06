@@ -2,7 +2,12 @@ N32G452 RT-Thread local integration pack
 ======================================
 
 This is a user-maintained integration package, not an official Nations,
-RT-Thread, LVGL or Arm release. Package version: 0.1.1.
+RT-Thread, LVGL or Arm release. Package version: 0.1.2.
+
+The pack's own integration/packaging work is MIT licensed; the full text and
+the repository-scope statement are in the source repo's LICENSE file
+(https://github.com/belfry2023/N32G452_RTThread). Nothing here relicenses
+third-party material.
 
 Third-party materials retain their original authorship and licenses:
 

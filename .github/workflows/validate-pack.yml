@@ -1,0 +1,128 @@
+name: validate-pack
+
+# 每次 push / PR 自动跑 CMSIS-Pack 的 7 项校验，以及 GCC 交叉编译与链接约束自检。
+# 这两件事都是「不需要实板、不需要 Keil」就能自动化的部分；
+# 实板验证（GP21 精度、屏幕时序、按键手感）仍然只能人工做，见 docs/BRINGUP_GP21.md。
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1) CMSIS-Pack：构建 + 7 项校验
+  #    validate_pack.py 的第 7 项要求存在一个「真装出来的」隔离安装目录，
+  #    否则会打印 SKIP 并静默放行。这里用官方 cpackget 做一次真实安装，
+  #    保证 CI 里跑的是完整 7 项，而不是 6 项 + 1 个 SKIP。
+  # ---------------------------------------------------------------------------
+  pack:
+    name: CMSIS-Pack 构建 + 7 项校验
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 安装 cpackget 2.2.2
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/cpackget.tar.gz \
+            https://github.com/Open-CMSIS-Pack/cpackget/releases/download/v2.2.2/cpackget_2.2.2_Linux_amd64.tar.gz
+          tar -xzf /tmp/cpackget.tar.gz -C /tmp
+          find /tmp -type f -name cpackget -exec sudo install -m 755 {} /usr/local/bin/cpackget \;
+          cpackget --version
+
+      - name: 构建 pack
+        run: python3 tools/build_pack.py
+
+      # -n/--no-dependencies：依赖已随仓库提供，装本地文件即可，不需要外网解析。
+      # 先装官方器件包 Nationstech.N32G45x_DFP，再装主包。
+      #
+      # ⚠️ 版本号必须从 build_pack.VERSION 取，不要写 dist/Belfry.*.pack 这种通配。
+      #    cpackget 按 pdsc 里声明的版本建目录（<vendor>/<pack>/<version>/），
+      #    通配一旦匹配到旧的 .pack，装出来的就是旧版本，而 validate_pack.py 找的是
+      #    当前 VERSION 的目录 —— 结果不是报错，而是第 7 项静默变成 SKIP。
+      - name: 用 cpackget 做隔离安装
+        run: |
+          set -euo pipefail
+          VERSION=$(python3 -c "import sys; sys.path.insert(0, 'tools'); from build_pack import VERSION; print(VERSION)")
+          ROOT="$PWD/build/pack-install"
+          echo "pack version: $VERSION"
+          cpackget add -R "$ROOT" -n -a dist/Nationstech.N32G45x_DFP.1.3.0.pack
+          cpackget add -R "$ROOT" -n -a "dist/Belfry.N32G452_RTThread.$VERSION.pack"
+
+      # 第 7 项是"有则比对、无则 SKIP"——如果安装目录没建对，脚本会安静地跳过它。
+      # 这里显式确认目录存在，把静默降级变成硬失败。
+      - name: 确认隔离安装目录已建立（防止第 7 项退化成 SKIP）
+        run: |
+          set -euo pipefail
+          VERSION=$(python3 -c "import sys; sys.path.insert(0, 'tools'); from build_pack import VERSION; print(VERSION)")
+          test -d "build/pack-install/Belfry/N32G452_RTThread/$VERSION" || {
+            echo "::error::build/pack-install/Belfry/N32G452_RTThread/$VERSION 不存在，第 7 项会退化成 SKIP"
+            exit 1
+          }
+
+      - name: 校验 pack（7 项）
+        run: python3 tools/validate_pack.py
+
+      - name: 写入 Job Summary
+        if: always()
+        run: python3 tools/ci_summary.py >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 上传校验报告与 sha256
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pack-validation
+          path: |
+            build/pack-validation.json
+            dist/*.sha256
+            dist/*.pdsc
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # 2) 固件：两个预设交叉编译 + 链接约束反查（verify-ld）
+  #    CI 用的是 Ubuntu 自带的 arm-none-eabi-gcc，与本机 msys64 的版本不一定相同；
+  #    版本差异导致失败本身就是有用的信号，不要去"修"成只在某一版能过。
+  # ---------------------------------------------------------------------------
+  firmware:
+    name: GCC 交叉编译 + 链接约束自检
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装工具链
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends \
+            cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: 记录版本（排错时最有用的一行）
+        run: |
+          arm-none-eabi-gcc --version | head -1
+          cmake --version | head -1
+          ninja --version
+
+      - name: 配置 + 构建 rtthread / rtthread-lvgl
+        run: |
+          set -euo pipefail
+          for preset in rtthread rtthread-lvgl; do
+            echo "::group::$preset"
+            cmake --preset "$preset"
+            cmake --build --preset "$preset"
+            cmake --build --preset "$preset" --target verify-ld
+            echo "::endgroup::"
+          done
+
+      - name: 体积报告
+        run: |
+          arm-none-eabi-size build/rtthread/n32g452-firmware.elf
+          arm-none-eabi-size build/rtthread-lvgl/n32g452-firmware.elf

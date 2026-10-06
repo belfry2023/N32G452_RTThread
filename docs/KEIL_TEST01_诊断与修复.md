@@ -441,17 +441,29 @@ PASS: pack audit. Native Arm compilation and hardware validation are separate re
 
 ```powershell
 python tools\build_pack.py        # -> dist\Belfry.N32G452_RTThread.0.1.2.pack
-python tools\validate_pack.py     # 7 项校验
 
-# 隔离安装目录（校验器做逐字节比对用，不污染真实 Packs 目录）
-$tmp = "$env:TEMP\b012"
-Copy-Item dist\Belfry.N32G452_RTThread.0.1.2.pack "$env:TEMP\b012.zip" -Force
-Expand-Archive "$env:TEMP\b012.zip" -DestinationPath $tmp -Force
-Copy-Item "$tmp\*" build\pack-install\Belfry\N32G452_RTThread\0.1.2\ -Recurse -Force
+# 隔离安装：必须用真正的 CMSIS-Pack 安装器（cpackget），不能手工解压
+cpackget add -R "$PWD\build\pack-install" -n -a dist\Nationstech.N32G45x_DFP.1.3.0.pack
+cpackget add -R "$PWD\build\pack-install" -n -a dist\Belfry.N32G452_RTThread.0.1.2.pack
+
+python tools\validate_pack.py     # 7 项校验（含"装出来的 == 发出去的"）
 ```
 
-> ⚠️ `Expand-Archive` **不接受 `.pack` 扩展名**，必须先复制成 `.zip`。
-> 我第一次漏了这步，导致隔离目录为空、校验反而报 `Installed payload stale/missing`。
+`-n` / `--no-dependencies`：依赖已随仓库提供，装本地文件即可，不需要外网解析依赖。
+cpackget 2.2.2 的 Windows 版在
+[cpackget releases](https://github.com/Open-CMSIS-Pack/cpackget/releases) 下载，
+解压后把 `cpackget.exe` 放进 PATH 即可。CI 里同一套命令跑在 Linux 上，见
+[`.github/workflows/validate-pack.yml`](../.github/workflows/validate-pack.yml)。
+
+> ⚠️ **不要用 `Expand-Archive` + `Copy-Item` 去"造"这个隔离目录。**
+> 我最初就是这么干的，结果是**自证循环**：把归档解压出来、再复制到校验器要找的位置，
+> 然后拿它和归档比对——永远相等，什么也证明不了。
+> `Expand-Archive` 还不接受 `.pack` 扩展名（必须先改名成 `.zip`），漏了这步会得到空目录，
+> 校验反而报 `Installed payload stale/missing`。
+>
+> 校验器的第 7 项只有在目录**由 cpackget 真实安装产生**时才有意义，
+> 它验证的是交付物（归档）与安装结果一致——安装器可能改变路径大小写或做归一化，
+> 那正是需要被查出来的差异。CI 里已经用真 cpackget 跑这一项，不会再出现 `SKIP`。
 
 ## 相关文件备份
 
