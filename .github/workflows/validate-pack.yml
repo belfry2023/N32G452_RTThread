@@ -33,10 +33,18 @@ jobs:
       - name: 安装 cpackget 2.2.2
         run: |
           set -euo pipefail
-          curl -fsSL -o /tmp/cpackget.tar.gz \
+          mkdir -p "$RUNNER_TEMP/cpackget"
+          curl -fsSL -o "$RUNNER_TEMP/cpackget.tar.gz" \
             https://github.com/Open-CMSIS-Pack/cpackget/releases/download/v2.2.2/cpackget_2.2.2_Linux_amd64.tar.gz
-          tar -xzf /tmp/cpackget.tar.gz -C /tmp
-          find /tmp -type f -name cpackget -exec sudo install -m 755 {} /usr/local/bin/cpackget \;
+          tar -xzf "$RUNNER_TEMP/cpackget.tar.gz" -C "$RUNNER_TEMP/cpackget"
+          # 归档里是 cpackget_2.2.2_linux_amd64/cpackget。
+          # ⚠️ find 必须限定在自己刚解压出来的目录里，不要扫 /tmp：
+          #    那里有 /tmp/systemd-private-* 之类读不了的目录，find 会打印
+          #    "Permission denied" 并以 1 退出，在 set -e 下直接判这一步失败。
+          #    第一次挂 CI 就是栽在这里（curl/tar 其实是成功的）。
+          CPACKGET="$(find "$RUNNER_TEMP/cpackget" -type f -name cpackget -print -quit)"
+          test -n "$CPACKGET" || { echo "::error::tar 包里没找到 cpackget 可执行文件"; exit 1; }
+          sudo install -m 755 "$CPACKGET" /usr/local/bin/cpackget
           cpackget --version
 
       - name: 构建 pack
