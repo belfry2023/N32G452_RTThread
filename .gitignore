@@ -50,9 +50,43 @@ Listings/
 #       含 attr=config 的模板副本 (rtconfig.h / board_config.h / lv_conf.h /
 #       gc9307c_panel.h / *.sct), 属于工程的一部分, 不是构建产物。
 
-# ---- 体积大 / 需单独获取的依赖 ----
-Nations.N32G45x_Library.2.6.0/
-third_party/lvgl/
+# ---- 第三方依赖：为「开箱即用」入库, 但只收构建真正用到的部分 ----
+#
+# 完整 SDK 有 47MB, 其中 projects/(EVAL 例程) 占 32MB, lwIP/FreeRTOS 占 6MB,
+# 而 CMake 构建只用到 firmware/ 与 middlewares/rt-thread/。
+# 完整 LVGL 有 96MB, 其中 .git 占 26MB、其它 demo 的图片资源占 55MB,
+# 而构建只用 src/ 与 demos/{keypad_encoder,stress}。
+# 下面的写法是「先全排除, 再逐个放行」—— .gitignore 的目录放行必须逐级声明,
+# 所以嵌套看起来啰嗦, 但这是唯一正确的规则。
+
+Nations.N32G45x_Library.2.6.0/*
+!Nations.N32G45x_Library.2.6.0/firmware/
+!Nations.N32G45x_Library.2.6.0/middlewares/
+Nations.N32G45x_Library.2.6.0/middlewares/*
+!Nations.N32G45x_Library.2.6.0/middlewares/rt-thread/
+# tools/build_pack.py 与 prepare_keil_official.py 要用 LedBlink.uvprojx 当模板
+!Nations.N32G45x_Library.2.6.0/projects/
+Nations.N32G45x_Library.2.6.0/projects/*
+!Nations.N32G45x_Library.2.6.0/projects/n32g45x_EVAL/
+Nations.N32G45x_Library.2.6.0/projects/n32g45x_EVAL/*
+!Nations.N32G45x_Library.2.6.0/projects/n32g45x_EVAL/examples/
+Nations.N32G45x_Library.2.6.0/projects/n32g45x_EVAL/examples/*
+!Nations.N32G45x_Library.2.6.0/projects/n32g45x_EVAL/examples/GPIO/
+Nations.N32G45x_Library.2.6.0/projects/n32g45x_EVAL/examples/GPIO/*
+!Nations.N32G45x_Library.2.6.0/projects/n32g45x_EVAL/examples/GPIO/LedBlink/
+
+third_party/lvgl/*
+!third_party/lvgl/src/
+!third_party/lvgl/lvgl.h
+!third_party/lvgl/LICENSE.txt
+!third_party/lvgl/README.md
+!third_party/lvgl/demos/
+third_party/lvgl/demos/*
+!third_party/lvgl/demos/lv_demos.h
+!third_party/lvgl/demos/keypad_encoder/
+!third_party/lvgl/demos/stress/
+
+# 原始下载包与已解压的 J-Link 补丁不入库（可重新下载）
 zip/
 jlink_patch/
 

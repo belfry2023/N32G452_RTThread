@@ -2,18 +2,27 @@
 
 当前推荐工程使用 **N32G452VE、内部 HSI/PLL 128 MHz、GP21 外部 5 MHz 参考、GC9307C 240×320、LVGL 按键导航**。
 
-## ⚠️ 先获取依赖（否则不能编译）
+## 依赖（已随仓库提供，克隆后可直接编译）
 
-本仓库**不包含第三方依赖**（体积与版权原因），克隆后先补齐这两项：
+第三方依赖按**只收录构建所需部分**的方式随仓库提供：
 
-| 依赖 | 放到哪里 | 获取方式 |
-|---|---|---|
-| Nations N32G45x 固件库 2.6.0 | `Nations.N32G45x_Library.2.6.0/` | 从国民技术官网下载，解压到仓库根目录 |
-| LVGL v8.3.11 | `third_party/lvgl/` | `git clone --depth 1 --branch release/v8.3 https://gitee.com/mirrors/lvgl.git third_party/lvgl` |
+| 依赖 | 位置 | 收录范围 | 原包 → 实际 |
+|---|---|---|---|
+| Nations N32G45x 固件库 2.6.0 | `Nations.N32G45x_Library.2.6.0/` | `firmware/` + `middlewares/rt-thread/` + `projects/.../GPIO/LedBlink/`（打包脚本的模板） | 47 MB → 9 MB |
+| LVGL v8.3.11 | `third_party/lvgl/` | `src/` + `demos/{keypad_encoder,stress}` + `lvgl.h` | 96 MB → 15 MB |
 
-`docs/*.pdf`（厂商数据手册与应用笔记）同样不入库，需要时从官网下载，文件名见 [docs/SOURCES.md](docs/SOURCES.md)。
+未收录的部分：SDK 的 `projects/` 例程（32 MB）、lwIP 与 FreeRTOS（6 MB）；
+LVGL 的上游 `.git`（26 MB）与其它示例的图片资源（55 MB，`lv_conf.h` 里对应的
+`LV_USE_DEMO_*` 均为 0，不影响编译）。
 
-补齐后先跑 `./tools/check_env.ps1` 确认工具链（arm-none-eabi-gcc / CMake / Ninja）就位，再执行下面的构建。
+需要完整原包时：
+- SDK — 从国民技术官网下载，覆盖到同目录即可
+- LVGL — `git clone --depth 1 --branch release/v8.3 https://gitee.com/mirrors/lvgl.git third_party/lvgl`
+
+`docs/*.pdf`（厂商数据手册与应用笔记）**未收录**（版权归厂商），需要时从官网下载，
+文件名见 [docs/SOURCES.md](docs/SOURCES.md)。
+
+先跑 `./tools/check_env.ps1` 确认工具链（arm-none-eabi-gcc / CMake / Ninja）就位。
 
 ## 立即使用
 
